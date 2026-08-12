@@ -4,14 +4,17 @@ export { LoginForm };
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 import { loginSchema, type LoginFormValues } from "../schemas/auth.schema";
-
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginForm() {
+  const [authError, setAuthError] = useState("");
+  const supabase = createClient();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -20,8 +23,23 @@ export default function LoginForm() {
     },
   });
 
-  function onSubmit(values: LoginFormValues) {
-    console.log("Login values:", values);
+  async function onSubmit(values: LoginFormValues) {
+    setAuthError("");
+
+     const {error, data} = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      console.error("Login error:", error.message);
+      setAuthError(error.message);
+      return 
+
+    }
+
+    window.location.href = "/dashboard";
+
   }
 
   return (

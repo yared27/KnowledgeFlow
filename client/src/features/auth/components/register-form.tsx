@@ -8,12 +8,15 @@ import {
   registerSchema,
   type RegisterFormValues,
 } from "../schemas/auth.schema";
-
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function RegisterForm() {
+  const [authError, setAuthError] = useState("");
+  const supabase = createClient();
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -24,8 +27,27 @@ export function RegisterForm() {
     },
   });
 
-  function onSubmit(values: RegisterFormValues) {
+async function onSubmit(values: RegisterFormValues) {
     console.log("Register values:", values);
+
+    const {error, data} = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options : {
+            data: { 
+                name: values.name
+            }
+        }
+
+      });
+
+      if (error) {  
+        setAuthError(error.message);
+        return 
+      }
+
+    window.location.href = "/login";
+
   }
 
   return (
